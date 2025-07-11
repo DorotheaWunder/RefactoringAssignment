@@ -5,6 +5,7 @@ using static DotManager;
 using static LevelManager;
 using static GhostManager;
 using static ScoreManager;
+using static InputManager;
 
 public static class PlayerManager
 {
@@ -83,48 +84,21 @@ public static class PlayerManager
 		}
 	}
 	
+	
 	public static bool GetStartingDirectionInput()
 	{
-		GetInput:
-		ConsoleKey key = Console.ReadKey(true).Key;
-		switch (key)
-		{
-			case ConsoleKey.LeftArrow: PacManMovingDirection = Direction.Left; break;
-			case ConsoleKey.RightArrow: PacManMovingDirection = Direction.Right; break;
-			case ConsoleKey.Escape: Console.Clear(); Console.Write("PacMan was closed."); return true;
-			default: goto GetInput;
-		}
-		return false;
+		return WaitForFirstDirection() == null;
 	}
+	
+	public static bool HandleInput() => InputManager.HandleInput();
 
-	public static bool HandleInput()
+	public static void TrySetPacManDirection(Direction direction)
 	{
-		bool moved = false;
-		void TrySetPacManDirection(Direction direction)
+		if (PacManMovingDirection != direction &&
+		    CanMove(PacManPosition.X, PacManPosition.Y, direction))
 		{
-			if (!moved &&
-			    PacManMovingDirection != direction &&
-			    CanMove(PacManPosition.X, PacManPosition.Y, direction))
-			{
-				PacManMovingDirection = direction;
-				PacManMovingFrame = 0;
-				moved = true;
-			}
+			PacManMovingDirection = direction;
+			PacManMovingFrame = 0;
 		}
-		while (Console.KeyAvailable)
-		{
-			switch (Console.ReadKey(true).Key)
-			{
-				case ConsoleKey.UpArrow: TrySetPacManDirection(Direction.Up); break;
-				case ConsoleKey.DownArrow: TrySetPacManDirection(Direction.Down); break;
-				case ConsoleKey.LeftArrow: TrySetPacManDirection(Direction.Left); break;
-				case ConsoleKey.RightArrow: TrySetPacManDirection(Direction.Right); break;
-				case ConsoleKey.Escape:
-					Console.Clear();
-					Console.Write("PPacMan was closed.");
-					return true;
-			}
-		}
-		return false;
 	}
 }
