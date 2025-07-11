@@ -8,3 +8,9 @@ From the Console Game Repository: https://github.com/dotnet/dotnet-console-games
 2. Used the State Pattern for player movement directions because:
     - more streamlined and less cluttered UpdatePacMan() method
     - replacing the if statements with states to divide movement logic and movement behavior
+    
+3. Used the Factory Patten for the ghosts because
+    - it decouples initialization from behavior logic
+    - the original initialization method had a lot of repetition
+    - each ghost type has its own separated class now
+    - creating new ghost/enemy types would be more scalable and streamlined
