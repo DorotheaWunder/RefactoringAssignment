@@ -10,7 +10,8 @@ using static InputManager;
 public static class PlayerManager
 {
 	public static (int X, int Y) PacManPosition;
-	public static Direction? PacManMovingDirection = default;
+	//public static Direction? PacManMovingDirection = default;
+	public static IMovementState CurrentMovementState = null;
 	public static int? PacManMovingFrame = default;
 	
 	const int FramesToMoveHorizontal = 6;
@@ -26,61 +27,12 @@ public static class PlayerManager
 	
 	public static void UpdatePacMan()
 	{
-		if (PacManMovingDirection.HasValue)
+		CurrentMovementState?.Move();
+		
+		if (CurrentMovementState != null &&
+		    !CanMove(PacManPosition.X, PacManPosition.Y, CurrentMovementState.Direction))
 		{
-			if ((PacManMovingDirection == Direction.Left || PacManMovingDirection == Direction.Right) && PacManMovingFrame >= FramesToMoveHorizontal ||
-			    (PacManMovingDirection == Direction.Up || PacManMovingDirection == Direction.Down) && PacManMovingFrame >= FramesToMoveVertical)
-			{
-				PacManMovingFrame = 0;
-				int x_adjust =
-					PacManMovingDirection == Direction.Left ? -1 :
-					PacManMovingDirection == Direction.Right ? 1 :
-					0;
-				int y_adjust =
-					PacManMovingDirection == Direction.Up ? -1 :
-					PacManMovingDirection == Direction.Down ? 1 :
-					0;
-
-				Console.SetCursorPosition(PacManPosition.X, PacManPosition.Y);
-				Console.Write(" ");
-				PacManPosition = (PacManPosition.X + x_adjust, PacManPosition.Y + y_adjust);
-
-				if (PacManPosition.X < 0)
-				{
-					PacManPosition.X = 40;
-				}
-				else if (PacManPosition.X > 40)
-				{
-					PacManPosition.X = 0;
-				}
-
-				char currentDot = GetDotAt(PacManPosition.X, PacManPosition.Y);
-
-				if (currentDot == '·')
-				{
-					ClearDotAt(PacManPosition.X, PacManPosition.Y);
-					Add(1);
-				}
-				else if (currentDot == '+')
-				{
-					foreach (Ghost ghost in ghosts)
-					{
-						ghost.Weak = true;
-						ghost.WeakTime = 0;
-					}
-					ClearDotAt(PacManPosition.X, PacManPosition.Y);
-					Add(3);
-				}
-
-				if (!CanMove(PacManPosition.X, PacManPosition.Y, PacManMovingDirection.Value))
-				{
-					PacManMovingDirection = null;
-				}
-			}
-			else
-			{
-				PacManMovingFrame++;
-			}
+			CurrentMovementState = null;
 		}
 	}
 	
@@ -94,11 +46,147 @@ public static class PlayerManager
 
 	public static void TrySetPacManDirection(Direction direction)
 	{
-		if (PacManMovingDirection != direction &&
-		    CanMove(PacManPosition.X, PacManPosition.Y, direction))
+		if (CurrentMovementState != null && CurrentMovementState.Direction == direction)
+			return;
+		
+		if (CanMove(PacManPosition.X, PacManPosition.Y, direction))
 		{
-			PacManMovingDirection = direction;
+			CurrentMovementState = direction switch
+			{
+				Direction.Up => new MoveUpState(),
+				Direction.Down => new MoveDownState(),
+				Direction.Left => new MoveLeftState(),
+				Direction.Right => new MoveRightState(),
+				_ => CurrentMovementState
+			};
+
 			PacManMovingFrame = 0;
+		}
+	}
+	
+	public static void HandleCollision()
+	{
+		char currentDot = GetDotAt(PacManPosition.X, PacManPosition.Y);
+
+		if (currentDot == '·')
+		{
+			ClearDotAt(PacManPosition.X, PacManPosition.Y);
+			Add(1);
+		}
+		else if (currentDot == '+')
+		{
+			foreach (Ghost ghost in ghosts)
+			{
+				ghost.Weak = true;
+				ghost.WeakTime = 0;
+			}
+			ClearDotAt(PacManPosition.X, PacManPosition.Y);
+			Add(3);
+		}
+
+		if (!CanMove(PacManPosition.X, PacManPosition.Y, CurrentMovementState.Direction))
+		{
+			CurrentMovementState = null;
+		}
+	}
+}
+
+//-------------------------------------------------------- Movement State Directions Setup
+public interface IMovementState
+{
+	void Move();
+	PlayerManager.Direction Direction { get; }
+}
+
+public class MoveLeftState : IMovementState
+{
+	public PlayerManager.Direction Direction => PlayerManager.Direction.Left;
+
+	public void Move()
+	{
+		if (PlayerManager.PacManMovingFrame >= 6)
+		{
+			PlayerManager.PacManMovingFrame = 0;
+			Console.SetCursorPosition(PlayerManager.PacManPosition.X, PlayerManager.PacManPosition.Y);
+			Console.Write(" ");
+			PlayerManager.PacManPosition = (PlayerManager.PacManPosition.X - 1, PlayerManager.PacManPosition.Y);
+			if (PlayerManager.PacManPosition.X < 0)
+				PlayerManager.PacManPosition.X = 40;
+
+			PlayerManager.HandleCollision();
+		}
+		else
+		{
+			PlayerManager.PacManMovingFrame++;
+		}
+	}
+}
+
+public class MoveRightState : IMovementState
+{
+	public PlayerManager.Direction Direction => PlayerManager.Direction.Right;
+	
+	public void Move()
+	{
+		if (PlayerManager.PacManMovingFrame >= 6)
+		{
+			PlayerManager.PacManMovingFrame = 0;
+			Console.SetCursorPosition(PlayerManager.PacManPosition.X, PlayerManager.PacManPosition.Y);
+			Console.Write(" ");
+			PlayerManager.PacManPosition = (PlayerManager.PacManPosition.X + 1, PlayerManager.PacManPosition.Y);
+
+			if (PlayerManager.PacManPosition.X > 40)
+				PlayerManager.PacManPosition.X = 0;
+
+			PlayerManager.HandleCollision();
+		}
+		else
+		{
+			PlayerManager.PacManMovingFrame++;
+		}
+	}
+}
+
+public class MoveUpState : IMovementState
+{
+	public PlayerManager.Direction Direction => PlayerManager.Direction.Up;
+	
+	public void Move()
+	{
+		if (PlayerManager.PacManMovingFrame >= 6)
+		{
+			PlayerManager.PacManMovingFrame = 0;
+			Console.SetCursorPosition(PlayerManager.PacManPosition.X, PlayerManager.PacManPosition.Y);
+			Console.Write(" ");
+			PlayerManager.PacManPosition = (PlayerManager.PacManPosition.X, PlayerManager.PacManPosition.Y - 1);
+
+			PlayerManager.HandleCollision();
+		}
+		else
+		{
+			PlayerManager.PacManMovingFrame++;
+		}
+	}
+}
+
+public class MoveDownState : IMovementState
+{
+	public PlayerManager.Direction Direction => PlayerManager.Direction.Down;
+	
+	public void Move()
+	{
+		if (PlayerManager.PacManMovingFrame >= 6)
+		{
+			PlayerManager.PacManMovingFrame = 0;
+			Console.SetCursorPosition(PlayerManager.PacManPosition.X, PlayerManager.PacManPosition.Y);
+			Console.Write(" ");
+			PlayerManager.PacManPosition = (PlayerManager.PacManPosition.X, PlayerManager.PacManPosition.Y + 1);
+
+			PlayerManager.HandleCollision();
+		}
+		else
+		{
+			PlayerManager.PacManMovingFrame++;
 		}
 	}
 }

@@ -13,7 +13,6 @@ using static PacMan_Refactored.GhostManager;
 using static PacMan_Refactored.PlayerManager;
 using static PacMan_Refactored.LevelManager;
 using static PacMan_Refactored.ScoreManager;
-
 //--------------------------------------------------------------------
 
 int OriginalWindowWidth = Console.WindowWidth;
@@ -54,7 +53,7 @@ NextRound:
 	RenderGate();
 	RenderDots(GetDots());
 	RenderReady();
-	RenderPacMan(PacManPosition, PacManMovingDirection, PacManMovingFrame, PacManAnimations);
+	RenderPacMan(PacManPosition,  CurrentMovementState?.Direction, PacManMovingFrame, PacManAnimations);
 	RenderGhosts(ghosts);
 	RenderScore(Score);
 	if (GetStartingDirectionInput())
@@ -73,7 +72,7 @@ NextRound:
 		UpdateGhosts();
 		RenderScore(Score);
 		RenderDots(GetDots());
-		RenderPacMan(PacManPosition, PacManMovingDirection, PacManMovingFrame, PacManAnimations);
+		RenderPacMan(PacManPosition,  CurrentMovementState?.Direction, PacManMovingFrame, PacManAnimations);
 		RenderGhosts(ghosts);
 		foreach (Ghost ghost in ghosts)
 		{

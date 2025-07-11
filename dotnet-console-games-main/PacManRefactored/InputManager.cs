@@ -45,7 +45,7 @@ public static class InputManager
 			if (keyBindings.TryGetValue(key, out var command))
 			{
 				command.Execute();
-				return PacManMovingDirection;
+				return CurrentMovementState?.Direction;
 			}
 			else if (key == ConsoleKey.Escape)
 			{
