@@ -2,6 +2,7 @@
 using System;
 using static GhostManager;
 using static PlayerManager;
+using static GhostTypes;
 
 public static class VisualManager
 {

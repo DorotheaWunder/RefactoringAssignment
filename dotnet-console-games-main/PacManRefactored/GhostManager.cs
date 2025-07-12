@@ -6,6 +6,7 @@ using Towel;
 using static Towel.Statics;
 using static AsciiData;
 using static PlayerManager;
+using static GhostTypes;
 
 
 public static class GhostManager
@@ -13,6 +14,19 @@ public static class GhostManager
 	public const int GhostWeakTime = 200; 
 	public static (int X, int Y)[] Locations = GetLocations();
 	public static Ghost[] ghosts;
+	
+	public static void Initialize()
+	{
+		EventManager.OnGameEvent += OnEvent;
+	}
+	
+	private static void OnEvent(EventManager.GameEvent gameEvent)
+	{
+		if (gameEvent == EventManager.GameEvent.OnGhostCollision)
+		{
+			Console.SetCursorPosition(0, 24);
+		}
+	}
 	
 	
 	public static void InitializeGhosts()
@@ -26,7 +40,7 @@ public static class GhostManager
 		};
 	}
 	
-	public static Ghost[] GetGhosts() => ghosts;
+	public static GhostTypes.Ghost[] GetGhosts() => ghosts;
 	
 	public static void UpdateGhosts()
 	{
@@ -116,10 +130,10 @@ public static class GhostManager
 
 			int x = currentLocation.X;
 			int y = currentLocation.Y;
-			HandleNeighbor(x - 1, y); // left
-			HandleNeighbor(x, y + 1); // up
-			HandleNeighbor(x + 1, y); // right
-			HandleNeighbor(x, y - 1); // down
+			HandleNeighbor(x - 1, y);
+			HandleNeighbor(x, y + 1);
+			HandleNeighbor(x + 1, y);
+			HandleNeighbor(x, y - 1);
 		}
 
 		int Heuristic((int X, int Y) node)
@@ -131,110 +145,10 @@ public static class GhostManager
 
 		Action<Action<(int X, int Y)>> path = SearchGraph(position, Neighbors, Heuristic, node => node == destination)!;
 		(int X, int Y)[] array = path.ToArray();
+		
+		if (array.Length < 2)
+			return position;
+		
 		return array[1];
-	}
-}
-
-public abstract class Ghost
-{
-	public (int X, int Y) StartPosition { get; set; }
-	public (int X, int Y) Position { get; set; }
-	public bool Weak { get; set; }
-	public int WeakTime { get; set; }
-	public ConsoleColor Color { get; set; }
-	public Action? Update { get; set; }
-	public int UpdateFrame { get; set; }
-	public int FramesToUpdate { get; set; }
-	public (int X, int Y)? Destination { get; set; }
-	
-	
-	public Ghost((int X, int Y) startPosition)
-	{
-		StartPosition = startPosition;
-		Position = startPosition;
-		Update = () => UpdateGhost();
-	}
-
-	public abstract void UpdateGhost();
-}
-
-public static class GhostFactory
-{
-	public enum GhostType
-	{
-		GhostA,
-		GhostB,
-		GhostC,
-		GhostD
-	}
-
-	public static Ghost CreateGhost(GhostType type, (int X, int Y) startPosition)
-	{
-		return type switch
-		{
-			GhostType.GhostA => new GhostA(startPosition),
-			GhostType.GhostB => new GhostB(startPosition),
-			GhostType.GhostC => new GhostC(startPosition),
-			GhostType.GhostD => new GhostD(startPosition),
-			_ => throw new ArgumentException("Invalid ghost type"),
-		};
-	}
-}
-
-public class GhostA : Ghost
-{
-	public GhostA((int X, int Y) startPosition) : base(startPosition)
-	{
-		Color = ConsoleColor.Red;
-		FramesToUpdate = 6;
-	}
-
-	public override void UpdateGhost()
-	{
-		GhostManager.SharedUpdateLogic(this);
-	}
-}
-
-public class GhostB : Ghost
-{
-	public GhostB((int X, int Y) startPosition) : base(startPosition)
-	{
-		Color = ConsoleColor.DarkGreen;
-		FramesToUpdate = 6;
-		Destination = GhostManager.GetRandomLocation();
-	}
-
-	public override void UpdateGhost()
-	{
-		GhostManager.SharedUpdateLogic(this);
-	}
-}
-
-public class GhostC : Ghost
-{
-	public GhostC((int X, int Y) startPosition) : base(startPosition)
-	{
-		Color = ConsoleColor.Magenta;
-		FramesToUpdate = 12;
-		Destination = GhostManager.GetRandomLocation();
-	}
-
-	public override void UpdateGhost()
-	{
-		GhostManager.SharedUpdateLogic(this);
-	}
-}
-
-public class GhostD : Ghost
-{
-	public GhostD((int X, int Y) startPosition) : base(startPosition)
-	{
-		Color = ConsoleColor.Cyan;
-		FramesToUpdate = 12;
-	}
-
-	public override void UpdateGhost()
-	{
-		GhostManager.SharedUpdateLogic(this);
 	}
 }

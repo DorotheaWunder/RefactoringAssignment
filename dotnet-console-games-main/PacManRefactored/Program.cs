@@ -13,6 +13,7 @@ using static PacMan_Refactored.GhostManager;
 using static PacMan_Refactored.PlayerManager;
 using static PacMan_Refactored.LevelManager;
 using static PacMan_Refactored.ScoreManager;
+using static PacMan_Refactored.GhostTypes;
 //--------------------------------------------------------------------
 
 int OriginalWindowWidth = Console.WindowWidth;
@@ -22,8 +23,6 @@ ConsoleColor OriginalForegroundColor = Console.ForegroundColor;
 //--------------------------------------------------------------------
 
 int Score = 0;
-// InitializeGhosts();
-// Ghost[] Ghosts;
 
 GhostManager.InitializeGhosts();
 

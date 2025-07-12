@@ -6,11 +6,12 @@ using static LevelManager;
 using static GhostManager;
 using static ScoreManager;
 using static InputManager;
+using static MovementStates;
+using static GhostTypes;
 
 public static class PlayerManager
 {
 	public static (int X, int Y) PacManPosition;
-	//public static Direction? PacManMovingDirection = default;
 	public static IMovementState CurrentMovementState = null;
 	public static int? PacManMovingFrame = default;
 	
@@ -35,7 +36,6 @@ public static class PlayerManager
 			CurrentMovementState = null;
 		}
 	}
-	
 	
 	public static bool GetStartingDirectionInput()
 	{
@@ -71,7 +71,7 @@ public static class PlayerManager
 		if (currentDot == '·')
 		{
 			ClearDotAt(PacManPosition.X, PacManPosition.Y);
-			Add(1);
+			EventManager.Broadcast(EventManager.GameEvent.OnDotEaten);
 		}
 		else if (currentDot == '+')
 		{
@@ -81,112 +81,28 @@ public static class PlayerManager
 				ghost.WeakTime = 0;
 			}
 			ClearDotAt(PacManPosition.X, PacManPosition.Y);
-			Add(3);
+			EventManager.Broadcast(EventManager.GameEvent.OnSpecialDotEaten);
 		}
-
+		
+		foreach (Ghost ghost in ghosts)
+		{
+			if (ghost.Position == PacManPosition)
+			{
+				if (ghost.Weak)
+				{
+					ghost.Position = ghost.StartPosition;
+					EventManager.Broadcast(EventManager.GameEvent.OnGhostCollision);
+				}
+				else
+				{
+					EventManager.Broadcast(EventManager.GameEvent.OnGhostCollision);
+				}
+			}
+		}
+		
 		if (!CanMove(PacManPosition.X, PacManPosition.Y, CurrentMovementState.Direction))
 		{
 			CurrentMovementState = null;
-		}
-	}
-}
-
-//-------------------------------------------------------- Movement State Directions Setup
-public interface IMovementState
-{
-	void Move();
-	PlayerManager.Direction Direction { get; }
-}
-
-public class MoveLeftState : IMovementState
-{
-	public PlayerManager.Direction Direction => PlayerManager.Direction.Left;
-
-	public void Move()
-	{
-		if (PlayerManager.PacManMovingFrame >= 6)
-		{
-			PlayerManager.PacManMovingFrame = 0;
-			Console.SetCursorPosition(PlayerManager.PacManPosition.X, PlayerManager.PacManPosition.Y);
-			Console.Write(" ");
-			PlayerManager.PacManPosition = (PlayerManager.PacManPosition.X - 1, PlayerManager.PacManPosition.Y);
-			if (PlayerManager.PacManPosition.X < 0)
-				PlayerManager.PacManPosition.X = 40;
-
-			PlayerManager.HandleCollision();
-		}
-		else
-		{
-			PlayerManager.PacManMovingFrame++;
-		}
-	}
-}
-
-public class MoveRightState : IMovementState
-{
-	public PlayerManager.Direction Direction => PlayerManager.Direction.Right;
-	
-	public void Move()
-	{
-		if (PlayerManager.PacManMovingFrame >= 6)
-		{
-			PlayerManager.PacManMovingFrame = 0;
-			Console.SetCursorPosition(PlayerManager.PacManPosition.X, PlayerManager.PacManPosition.Y);
-			Console.Write(" ");
-			PlayerManager.PacManPosition = (PlayerManager.PacManPosition.X + 1, PlayerManager.PacManPosition.Y);
-
-			if (PlayerManager.PacManPosition.X > 40)
-				PlayerManager.PacManPosition.X = 0;
-
-			PlayerManager.HandleCollision();
-		}
-		else
-		{
-			PlayerManager.PacManMovingFrame++;
-		}
-	}
-}
-
-public class MoveUpState : IMovementState
-{
-	public PlayerManager.Direction Direction => PlayerManager.Direction.Up;
-	
-	public void Move()
-	{
-		if (PlayerManager.PacManMovingFrame >= 6)
-		{
-			PlayerManager.PacManMovingFrame = 0;
-			Console.SetCursorPosition(PlayerManager.PacManPosition.X, PlayerManager.PacManPosition.Y);
-			Console.Write(" ");
-			PlayerManager.PacManPosition = (PlayerManager.PacManPosition.X, PlayerManager.PacManPosition.Y - 1);
-
-			PlayerManager.HandleCollision();
-		}
-		else
-		{
-			PlayerManager.PacManMovingFrame++;
-		}
-	}
-}
-
-public class MoveDownState : IMovementState
-{
-	public PlayerManager.Direction Direction => PlayerManager.Direction.Down;
-	
-	public void Move()
-	{
-		if (PlayerManager.PacManMovingFrame >= 6)
-		{
-			PlayerManager.PacManMovingFrame = 0;
-			Console.SetCursorPosition(PlayerManager.PacManPosition.X, PlayerManager.PacManPosition.Y);
-			Console.Write(" ");
-			PlayerManager.PacManPosition = (PlayerManager.PacManPosition.X, PlayerManager.PacManPosition.Y + 1);
-
-			PlayerManager.HandleCollision();
-		}
-		else
-		{
-			PlayerManager.PacManMovingFrame++;
 		}
 	}
 }

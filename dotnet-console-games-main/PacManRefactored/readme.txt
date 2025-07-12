@@ -14,3 +14,8 @@ From the Console Game Repository: https://github.com/dotnet/dotnet-console-games
     - the original initialization method had a lot of repetition
     - each ghost type has its own separated class now
     - creating new ghost/enemy types would be more scalable and streamlined
+    
+4. Used the Observer Patten for the updates because
+    - it decouples the trigger (collision) from the effect
+    - makes the updates more streamlines
+    - it's easier to expand if I wanted to add more events or tie additional effects (like SFX) to an event
